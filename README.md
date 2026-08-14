@@ -40,6 +40,7 @@
   - [10. verify_setup.py fails at Forward Pass](#10-verify_setuppy-fails-at-forward-pass)
   - [11. Git LFS - Large File Warning](#11-git-lfs---large-file-warning)
   - [12. ImportError on Windows with scikit-image](#12-importerror-on-windows-with-scikit-image)
+  - [13. PowerShell cannot activate venv — scripts disabled (Windows)](#13-powershell-cannot-activate-venv--scripts-disabled-windows)
   - [Full Environment Reset (Nuclear Option)](#full-environment-reset-nuclear-option)
 - [Reproducing Benchmark Results](#reproducing-benchmark-results)
 - [License](#license)
@@ -508,6 +509,51 @@ git lfs pull
 ```bash
 pip uninstall scikit-image -y
 pip install scikit-image --only-binary :all:
+```
+
+---
+
+### 13. PowerShell cannot activate venv — scripts disabled (Windows)
+
+**Error message:**
+```
+.venv\Scripts\Activate.ps1 cannot be loaded because running scripts is
+disabled on this system.
+```
+
+**Cause**: Windows PowerShell blocks all `.ps1` scripts by default (`Restricted` execution policy).
+
+**Fix** — run this once in PowerShell (no admin required):
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+```
+
+**Verify the policy was applied:**
+
+```powershell
+Get-ExecutionPolicy -List
+# CurrentUser should now show: RemoteSigned
+```
+
+Then activate normally:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+> **Why `RemoteSigned`?** It allows locally created scripts (like the venv activator) to run freely, while still blocking unsigned scripts downloaded from the internet — a safe, minimal change.
+
+**Alternative** — if you don't want to change the policy permanently, activate for the current session only:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .venv\Scripts\Activate.ps1
+```
+
+**Alternative** — use Command Prompt instead of PowerShell (no policy issue):
+
+```cmd
+.venv\Scripts\activate.bat
 ```
 
 ---
