@@ -218,10 +218,25 @@ def main():
     # AMP — only for CUDA
     amp_ok = device.type == 'cuda'
 
-    # Weights path
-    weights_path = args.weights or os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'saved_models', 'best_model.pt'
-    )
+    # Weights path resolution
+    if args.weights:
+        weights_path = args.weights
+    else:
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        candidates = [
+            os.path.join(root_dir, 'Trained_Model_Weights.pt'),
+            os.path.join(root_dir, 'saved_models', 'best_model.pt'),
+            os.path.join(root_dir, 'weights', 'best_model.pt'),
+            os.path.join(root_dir, 'best_model.pt'),
+        ]
+        weights_path = None
+        for cand in candidates:
+            if os.path.exists(cand):
+                weights_path = cand
+                break
+        if weights_path is None:
+            weights_path = candidates[0]  # default fallback for error message
+
     print(f"[Weights] Loading from: {weights_path}")
     model = load_model(weights_path, device, args)
     print("[Model] Loaded OK — running inference...")

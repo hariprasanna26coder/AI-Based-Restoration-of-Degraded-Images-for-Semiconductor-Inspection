@@ -41,6 +41,7 @@
   - [11. Git LFS - Large File Warning](#11-git-lfs---large-file-warning)
   - [12. ImportError on Windows with scikit-image](#12-importerror-on-windows-with-scikit-image)
   - [13. PowerShell cannot activate venv — scripts disabled (Windows)](#13-powershell-cannot-activate-venv--scripts-disabled-windows)
+  - [14. evaluate.py: error: unrecognized arguments: \ \ (Windows PowerShell)](#14-evaluatepy-error-unrecognized-arguments---windows-powershell)
   - [Full Environment Reset (Nuclear Option)](#full-environment-reset-nuclear-option)
 - [Reproducing Benchmark Results](#reproducing-benchmark-results)
 - [License](#license)
@@ -201,11 +202,26 @@ python -c "import torch; print('CUDA available:', torch.cuda.is_available()); pr
 
 ## Evaluation / Inference
 
+> **💡 Quick Tip for PowerShell vs. Bash**:
+> - **Single-line command** (recommended across all platforms):
+>   `python evaluate.py --input_dir Test_NoisyLR/NoisyLR --output_dir outputs/restored`
+> - On **Linux / macOS (Bash)**, multi-line commands use backslash: `\`
+> - On **Windows PowerShell**, multi-line commands use backtick: `` ` `` (or just run on a single line)
+
 ### Test Set Inference (No Ground Truth)
 
 Runs inference on all `.npy` files in `--input_dir` and writes restored 256x256 float32 `.npy` arrays (plus `.png` thumbnails) to `--output_dir`:
 
 ```bash
+# Single line (Universal - Recommended)
+python evaluate.py --input_dir Test_NoisyLR/NoisyLR --output_dir outputs/restored
+
+# Multi-line (Windows PowerShell)
+python evaluate.py `
+    --input_dir Test_NoisyLR/NoisyLR `
+    --output_dir outputs/restored
+
+# Multi-line (Linux / macOS Bash)
 python evaluate.py \
     --input_dir Test_NoisyLR/NoisyLR \
     --output_dir outputs/restored
@@ -216,41 +232,34 @@ python evaluate.py \
 When ground truth `.npy` files are available, pass `--gt_dir` to compute **PSNR**, **SSIM**, and **LPIPS**:
 
 ```bash
-python evaluate.py \
-    --input_dir train/train/NoisyLR \
-    --output_dir outputs/val_restored \
-    --gt_dir train/train/GT
+# Single line
+python evaluate.py --input_dir train/train/NoisyLR --output_dir outputs/val_restored --gt_dir train/train/GT
 ```
 
 Per-image metrics and summary statistics are saved to `outputs/val_restored/metrics.json`.
 
 ### Custom Model Weights
 
+If you wish to load an alternative checkpoint:
+
 ```bash
-python evaluate.py \
-    --input_dir Test_NoisyLR/NoisyLR \
-    --output_dir outputs/custom_restored \
-    --weights path/to/your_checkpoint.pt
+python evaluate.py --input_dir Test_NoisyLR/NoisyLR --output_dir outputs/custom_restored --weights path/to/your_checkpoint.pt
 ```
+
+*(Note: If `--weights` is not specified, `evaluate.py` automatically detects and loads `Trained_Model_Weights.pt` from the repository root).*
 
 ### Quick Benchmark (Subset of Images)
 
 Process only the first N images for a quick speed test:
 
 ```bash
-python evaluate.py \
-    --input_dir Test_NoisyLR/NoisyLR \
-    --output_dir outputs/quick_test \
-    --max_samples 10
+python evaluate.py --input_dir Test_NoisyLR/NoisyLR --output_dir outputs/quick_test --max_samples 10
 ```
 
 ### Skip PNG Thumbnails (Faster I/O)
 
 ```bash
-python evaluate.py \
-    --input_dir Test_NoisyLR/NoisyLR \
-    --output_dir outputs/restored \
-    --no_png
+python evaluate.py --input_dir Test_NoisyLR/NoisyLR --output_dir outputs/restored --no_png
 ```
 
 ### All Evaluation Arguments
@@ -554,6 +563,31 @@ powershell -ExecutionPolicy Bypass -File .venv\Scripts\Activate.ps1
 
 ```cmd
 .venv\Scripts\activate.bat
+```
+
+---
+
+### 14. `evaluate.py: error: unrecognized arguments: \ \` (Windows PowerShell)
+
+**Error message:**
+```text
+evaluate.py: error: unrecognized arguments: \ \
+```
+
+**Cause**: In Linux / Bash shells, the backslash `\` is used for multi-line command continuation. In **Windows PowerShell**, `\` is treated as a literal text argument rather than a line break. When you copy-paste bash multi-line commands with `\`, PowerShell passes `\` to Python as an argument.
+
+**Fix Option 1 (Recommended)** — Run the command on a single line:
+
+```powershell
+python evaluate.py --input_dir D:\Test_NoisyLR --output_dir outputs/restored
+```
+
+**Fix Option 2** — Use PowerShell's line continuation character, which is the backtick `` ` `` (not `\`):
+
+```powershell
+python evaluate.py `
+    --input_dir D:\Test_NoisyLR `
+    --output_dir outputs/restored
 ```
 
 ---
