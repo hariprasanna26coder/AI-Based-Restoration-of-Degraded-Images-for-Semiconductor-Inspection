@@ -1,0 +1,80 @@
+# configs/train_config_3200.yaml
+# --------------------------------
+# Hyperparameters tuned for full 3200-image training dataset.
+# Key differences from train_config.yaml (400-image run):
+#   - More epochs (100) to fully converge with 8x more data
+#   - Slightly higher LR decayed slower via longer cosine cycle
+#   - num_workers bumped to 2 for faster I/O
+#   - Scheduler T_0 extended to match 100 epochs
+#   - early_stopping patience increased accordingly
+
+# -- Data ------------------------------------------------------------------
+data:
+  train_noisy_dir : "train/train/NoisyLR"   # relative to project root
+  train_gt_dir    : "train/train/GT"
+  val_split       : 0.10                    # 10% -> ~320 val, ~2880 train
+  noisy_patch_size: 96                      # same patch size as before
+  clip_sigma      : 3.0
+  num_workers     : 2                       # increased: 3200 files = more I/O
+
+# -- Model -----------------------------------------------------------------
+# Keep architecture identical so you can compare results fairly
+model:
+  in_ch             : 1
+  out_ch            : 1
+  base_ch           : 64
+  bottleneck_blocks : 6
+  scale             : 2
+
+# -- Training --------------------------------------------------------------
+training:
+  epochs        : 100             # 8x more steps/epoch -> fewer epochs needed
+                                  # but 100 gives the cosine schedule room to breathe
+  batch_size    : 4               # RTX 2050 4GB VRAM -- keep safe
+  seed          : 42
+
+# -- Optimizer -------------------------------------------------------------
+optimizer:
+  type          : AdamW
+  lr            : 2.0e-4          # same initial LR; more data = safer to keep it
+  weight_decay  : 1.0e-4
+  betas         : [0.9, 0.999]
+
+# -- LR Scheduler ----------------------------------------------------------
+scheduler:
+  type          : CosineAnnealingWarmRestarts
+  T_0           : 100             # full cosine sweep across all 100 epochs
+  T_mult        : 1
+  eta_min       : 1.0e-6
+
+# -- Loss Weights ----------------------------------------------------------
+loss:
+  w_char        : 1.0
+  w_ssim        : 0.2
+  w_edge        : 0.1
+  char_eps      : 1e-3
+
+# -- Mixed Precision -------------------------------------------------------
+amp:
+  enabled : false                 # keep FP32 for stability; enable if VRAM is tight
+
+# -- Checkpointing ---------------------------------------------------------
+checkpoint:
+  save_dir      : "saved_models"
+  best_metric   : "ssim"
+  save_every    : 10              # save every 10 epochs -> 10 checkpoints max
+  keep_last_n   : 3
+
+# -- Early Stopping --------------------------------------------------------
+early_stopping:
+  enabled   : true
+  patience  : 30                  # stop if no improvement for 30 epochs
+  min_delta : 1.0e-4
+
+# -- Logging ---------------------------------------------------------------
+logging:
+  log_every     : 20             # print every 20 batches (~720 batches/epoch)
+  val_every     : 1
+  save_vis_every: 10
+  vis_dir       : "outputs/train_vis_3200"
+  log_file      : "outputs/train_log_3200.csv"

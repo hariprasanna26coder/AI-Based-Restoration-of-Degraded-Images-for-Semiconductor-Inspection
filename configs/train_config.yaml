@@ -1,0 +1,73 @@
+# configs/train_config.yaml
+# --------------------------
+# All hyperparameters for SemiRestoreNet training.
+# Edit this file to experiment without touching source code.
+
+# ── Data ──────────────────────────────────────────────────────────────────
+data:
+  train_noisy_dir : "train/train/NoisyLR"   # relative to project root
+  train_gt_dir    : "train/train/GT"
+  val_split       : 0.10                    # 10 % reserved for validation
+  noisy_patch_size: 96                      # LR patch; GT patch = 192 (high texture resolution)
+  clip_sigma      : 3.0                     # σ for robust normalization
+  num_workers     : 0                       # increase if I/O is a bottleneck
+
+# ── Model ────────────────────────────────────────────────────────────────
+model:
+  in_ch             : 1
+  out_ch            : 1
+  base_ch           : 64          # channel width at first encoder level
+  bottleneck_blocks : 6           # NAFBlocks in the bottleneck
+  scale             : 2           # SR scale factor (128 → 256)
+
+# ── Training ─────────────────────────────────────────────────────────────
+training:
+  epochs        : 50              # Recommended 50-epoch sweet spot
+  batch_size    : 4               # RTX 2050 4GB VRAM safe
+  seed          : 42
+
+# ── Optimizer ─────────────────────────────────────────────────────────────
+optimizer:
+  type          : AdamW
+  lr            : 2.0e-4
+  weight_decay  : 1.0e-4
+  betas         : [0.9, 0.999]
+
+# ── LR Scheduler ──────────────────────────────────────────────────────────
+scheduler:
+  type          : CosineAnnealingWarmRestarts
+  T_0           : 50              # match full 50-epoch schedule
+  T_mult        : 1
+  eta_min       : 1.0e-6
+
+# ── Loss Weights ──────────────────────────────────────────────────────────
+loss:
+  w_char        : 1.0
+  w_ssim        : 0.2             # stable SSIM loss weight
+  w_edge        : 0.1             # stable Edge loss weight
+  char_eps      : 1e-3
+
+# ── Mixed Precision ───────────────────────────────────────────────────────
+amp:
+  enabled : false                 # stable FP32 precision
+
+# ── Checkpointing ─────────────────────────────────────────────────────────
+checkpoint:
+  save_dir      : "saved_models"
+  best_metric   : "ssim"          # 'ssim' or 'psnr' or 'loss'
+  save_every    : 10              # save checkpoint every 10 epochs
+  keep_last_n   : 3              # keep only the last N checkpoints
+
+# ── Early Stopping ────────────────────────────────────────────────────────
+early_stopping:
+  enabled   : true
+  patience  : 50                 # allow all 50 epochs to complete
+  min_delta : 1.0e-4
+
+# ── Logging ───────────────────────────────────────────────────────────────
+logging:
+  log_every     : 10             # print train loss every N batches
+  val_every     : 1              # validate every N epochs
+  save_vis_every: 10             # save comparison grid every N epochs
+  vis_dir       : "outputs/train_vis"
+  log_file      : "outputs/train_log.csv"
