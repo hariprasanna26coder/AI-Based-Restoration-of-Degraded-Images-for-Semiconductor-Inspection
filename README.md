@@ -106,7 +106,7 @@ A reviewer must be able to clone and run inference without contacting the author
 
 ```bash
 # Step 1 - Clone the repository
-git clone https://github.com/hariprasanna26coder/AI-Based-Restoration-of-Degraded-Images-for-Semiconductor-Inspections.git
+git clone https://github.com/hariprasanna26coder/AI-Based-Restoration-of-Degraded-Images-for-Semiconductor-Inspection.git
 cd AI-Based-Restoration-of-Degraded-Images-for-Semiconductor-Inspections
 
 # Step 2 - Install dependencies
