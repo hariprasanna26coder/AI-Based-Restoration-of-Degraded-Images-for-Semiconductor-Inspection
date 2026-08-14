@@ -291,11 +291,27 @@ python train.py --config configs/train_config_3200.yaml
 
 ### Resume Training from a Checkpoint
 
+To resume training from an intermediate epoch checkpoint or fine-tune from existing weights:
+
 ```bash
+# Single line (Universal - Recommended)
+python train.py --config configs/train_config.yaml --resume saved_models/checkpoint_epoch_0030.pt
+
+# Windows PowerShell (Multi-line)
+python train.py `
+    --config configs/train_config.yaml `
+    --resume saved_models/checkpoint_epoch_0030.pt
+
+# Linux / macOS Bash (Multi-line)
 python train.py \
     --config configs/train_config.yaml \
     --resume saved_models/checkpoint_epoch_0030.pt
 ```
+
+> **Note**: 
+> - Intermediate epoch checkpoints (e.g., `saved_models/checkpoint_epoch_XXXX.pt`) are automatically generated in `saved_models/` during training every 10 epochs.
+> - You can also pass `--resume Trained_Model_Weights.pt` to fine-tune directly from the final released model weights.
+> - Training requires the training dataset folders (`train/train/NoisyLR` and `train/train/GT`).
 
 ### Training Output
 
@@ -312,6 +328,16 @@ python train.py \
 Generate side-by-side comparisons of noisy input vs. restored output:
 
 ```bash
+# Single line (Recommended)
+python visualize_comparison.py --input_dir Test_NoisyLR/NoisyLR --restored_dir outputs/restored --output_dir outputs/comparisons
+
+# Windows PowerShell (Multi-line)
+python visualize_comparison.py `
+    --input_dir Test_NoisyLR/NoisyLR `
+    --restored_dir outputs/restored `
+    --output_dir outputs/comparisons
+
+# Linux / macOS Bash (Multi-line)
 python visualize_comparison.py \
     --input_dir Test_NoisyLR/NoisyLR \
     --restored_dir outputs/restored \

@@ -334,14 +334,29 @@ def main():
     # ── Resume ────────────────────────────────────────────────────────────
     start_epoch = 1
     best_ssim   = 0.0
-    if args.resume and os.path.exists(args.resume):
-        ckpt = torch.load(args.resume, map_location=device)
-        model.load_state_dict(ckpt['model'])
-        optimizer.load_state_dict(ckpt['optimizer'])
-        scheduler.load_state_dict(ckpt['scheduler'])
-        start_epoch = ckpt['epoch'] + 1
-        best_ssim   = ckpt.get('best_ssim', 0.0)
-        print(f"[Resume] Loaded checkpoint from epoch {ckpt['epoch']}, best_ssim={best_ssim:.4f}")
+    if args.resume:
+        if os.path.exists(args.resume):
+            ckpt = torch.load(args.resume, map_location=device, weights_only=False)
+            if isinstance(ckpt, dict) and 'model' in ckpt:
+                model.load_state_dict(ckpt['model'])
+                if 'optimizer' in ckpt:
+                    try:
+                        optimizer.load_state_dict(ckpt['optimizer'])
+                    except Exception as e:
+                        print(f"[Resume] Optimizer state skipped: {e}")
+                if 'scheduler' in ckpt:
+                    try:
+                        scheduler.load_state_dict(ckpt['scheduler'])
+                    except Exception as e:
+                        print(f"[Resume] Scheduler state skipped: {e}")
+                start_epoch = ckpt.get('epoch', 0) + 1
+                best_ssim   = ckpt.get('best_ssim', 0.0)
+                print(f"[Resume] Loaded checkpoint from epoch {ckpt.get('epoch', 0)}, best_ssim={best_ssim:.4f}")
+            else:
+                model.load_state_dict(ckpt)
+                print(f"[Resume] Loaded model weights from {args.resume} (training from epoch 1)")
+        else:
+            print(f"[WARNING] Resume checkpoint not found at: {args.resume}. Starting fresh training.")
 
     # ── CSV logger ────────────────────────────────────────────────────────
     csv_exists = os.path.exists(log_file)
